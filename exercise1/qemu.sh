@@ -15,11 +15,38 @@ readonly ROOTFS_DIR="${TMP_DIR}/rootfs"
 readonly ROOTFS="rootfs.cpio"
 readonly ROOTFS_PATH="${TMP_DIR}/${ROOTFS}"
 
-readonly KERNEL_VERSION="${KERNEL_VERSION:-6.4}"
-readonly KERNEL_URL="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/snapshot/linux-${KERNEL_VERSION}.tar.gz"
-readonly KERNEL_PATH="${TMP_DIR}/kernel.tar.gz"
-
 # Functions:
+function download_kernel {
+	local KERNEL_VERSION="${1:-6.4}"
+	local KERNEL="${2:-kernel.tar.gz}"
+	local KERNEL_URL="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/snapshot/linux-${KERNEL_VERSION}.tar.gz"
+
+	if [[ ! -f "$1" ]]; then
+		echo "Downloading Linux kernel (version $2)..."
+
+		wget --output-document="$1" \
+			--quiet \
+			--show-progress \
+			"$KERNEL_URL"
+	fi
+}
+
+function compile_kernel {
+	local EXT_KERNEL="linux-${1:-6.4}"
+
+	# Extract kernel if not already extracted
+	if [[ ! -d "$EXT_KERNEL" ]]; then
+		tar -xzf "$KERNEL"
+	fi
+
+	cd "linux-$KERNEL_VERSION"
+	make defconfig
+	# make -j
+	make
+}
+
+# Compile init program
+cc -static init.c -o init
 
 # Start of script:
 mkdir -p "${TMP_DIR}"
@@ -39,19 +66,11 @@ cc -static init.c -o "${ROOTFS_DIR}/init"
 echo
 
 echo "Downloading Linux kernel ($KERNEL_VERSION)..."
-wget --output-document="$KERNEL_PATH" \
-	--quiet \
-	--show-progress \
-	"$KERNEL_URL"
+download_kernel
 echo
 
 echo "Compile kernel..."
-(
-	cd "$TMP_DIR"
-	tar -xzvf "$KERNEL_PATH"
-
-	cd 
-)
+compile_kernel
 
 echo "Start QEMU..."
 qemu-system-x86_64 \
