@@ -13,7 +13,6 @@ readonly TMP_DIR="${TMP:-tmp}"
 
 readonly ROOTFS_DIR="${TMP_DIR}/rootfs"
 readonly ROOTFS="rootfs.cpio"
-readonly ROOTFS_PATH="${TMP_DIR}/${ROOTFS}"
 
 readonly KERNEL_VERSION="6.4"
 
@@ -38,8 +37,8 @@ function rootfs {
 
 # Download and compile a version of the linux kernel
 function kernel {
-	local VERSION="${1:-$KERNEL_VERSION}"
-	local TAR="${2:-kernel.tar.gz}"
+	local TAR="${1:-kernel.tar.gz}"
+	local VERSION="${2:-$KERNEL_VERSION}"
 	local URL="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/snapshot/linux-${VERSION}.tar.gz"
 	local EXTRACTED="linux-$VERSION"
 
@@ -59,18 +58,23 @@ function kernel {
 		tar -xzf "$TAR"
 	fi
 
+	exit
+
 	# Configure and compile kernel
-	cd "$EXTRACTED"
-	make defconfig # Use default config
-	# make -j
-	make
+	(
+		cd "$EXTRACTED"
+
+		make defconfig # Use default config
+		# make -j
+		make
+	)
 }
 
 function qemu {
 	echo "Start QEMU..."
 	qemu-system-x86_64 \
-		-kernel "${1:-$KERNEL_PATH}" \
-		-initrd "${2:-$ROOTFS_PATH}"
+		-kernel "$1" \
+		-initrd "${2:-$ROOTFS}"
 }
 
 # Start of script:
@@ -82,7 +86,7 @@ rootfs
 cd "$TMP_DIR"
 
 # Download, configure and compile kernel
-kernel
+kernel "kernel.tar.gz"
 
 # Run qemu
-qemu
+qemu "kernel.tar.gz"
