@@ -15,62 +15,67 @@ readonly ROOTFS_DIR="${TMP_DIR}/rootfs"
 readonly ROOTFS="rootfs.cpio"
 readonly ROOTFS_PATH="${TMP_DIR}/${ROOTFS}"
 
+readonly KERNEL_VERSION="6.4"
+
 # Functions:
-function download_kernel {
-	local KERNEL_VERSION="${1:-6.4}"
-	local KERNEL="${2:-kernel.tar.gz}"
-	local KERNEL_URL="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/snapshot/linux-${KERNEL_VERSION}.tar.gz"
+function rootfs {
+	# Compile init program
+	cc -static init.c -o init
 
-	if [[ ! -f "$1" ]]; then
-		echo "Downloading Linux kernel (version $2)..."
+	# Create root filesystem
+	echo "Creating root filesystem ($ROOTFS)..."
+	mkdir -p "${ROOTFS_DIR}"
+	cc -static init.c -o "${ROOTFS_DIR}/init"
 
-		wget --output-document="$1" \
-			--quiet \
-			--show-progress \
-			"$KERNEL_URL"
-	fi
+	# Use a subshell to cleanly enter
+	(
+		cd "${ROOTFS_DIR}"
+
+		# Copy files in the rootfs folder to an archive and compress it
+		find | cpio --quiet --create --format=newc | bzip2 --stdout >../$ROOTFS
+	)
 }
 
-function compile_kernel {
-	local EXT_KERNEL="linux-${1:-6.4}"
+# Download and compile a version of the linux kernel
+function kernel {
+	local VERSION="${1:-$KERNEL_VERSION}"
+	local TAR="${2:-kernel.tar.gz}"
+	local URL="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/snapshot/linux-${VERSION}.tar.gz"
+	local EXTRACTED="linux-$VERSION"
 
-	# Extract kernel if not already extracted
-	if [[ ! -d "$EXT_KERNEL" ]]; then
-		tar -xzf "$KERNEL"
+	# Download kernel
+	if [[ ! -f "$TAR" ]]; then
+		echo "Downloading Linux kernel (version $VERSION)..."
+
+		wget --output-document="$TAR" \
+			--quiet \
+			--show-progress \
+			"$URL"
 	fi
 
-	cd "linux-$KERNEL_VERSION"
-	make defconfig
+	# Extract kernel
+	if [[ ! -d "$EXTRACTED" ]]; then
+		echo "Extracting kernel"
+		tar -xzf "$TAR"
+	fi
+
+	# Configure and compile kernel
+	cd "$EXTRACTED"
+	make defconfig # Use default config
 	# make -j
 	make
 }
 
-# Compile init program
-cc -static init.c -o init
-
 # Start of script:
-mkdir -p "${TMP_DIR}"
+mkdir -p "$TMP_DIR"
 
-# Create root filesystem
-echo "Creating root filesystem ($ROOTFS)..."
-mkdir -p "${ROOTFS_DIR}"
-cc -static init.c -o "${ROOTFS_DIR}/init"
+# Create rootfs
+rootfs
 
-# Use a subshell to cleanly enter
-(
-	cd "${TMP_DIR}/rootfs"
+cd "$TMP_DIR"
 
-	# Copy files in the rootfs folder to an archive and compress it
-	find | cpio --quiet --create --format=newc | bzip2 --stdout >../$ROOTFS
-)
-echo
-
-echo "Downloading Linux kernel ($KERNEL_VERSION)..."
-download_kernel
-echo
-
-echo "Compile kernel..."
-compile_kernel
+# Download, configure and compile kernel
+kernel
 
 echo "Start QEMU..."
 qemu-system-x86_64 \
