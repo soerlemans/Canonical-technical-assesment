@@ -66,6 +66,13 @@ function kernel {
 	make
 }
 
+function qemu {
+	echo "Start QEMU..."
+	qemu-system-x86_64 \
+		-kernel "${1:-$KERNEL_PATH}" \
+		-initrd "${2:-$ROOTFS_PATH}"
+}
+
 # Start of script:
 mkdir -p "$TMP_DIR"
 
@@ -77,7 +84,5 @@ cd "$TMP_DIR"
 # Download, configure and compile kernel
 kernel
 
-echo "Start QEMU..."
-qemu-system-x86_64 \
-	-kernel "${KERNEL_PATH}" \
-	-initrd "${ROOTFS_PATH}"
+# Run qemu
+qemu
