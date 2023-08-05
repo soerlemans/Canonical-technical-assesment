@@ -58,8 +58,6 @@ function kernel {
 		tar -xzf "$TAR"
 	fi
 
-	exit
-
 	# Configure and compile kernel
 	(
 		cd "$EXTRACTED"
