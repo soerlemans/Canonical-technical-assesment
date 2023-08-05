@@ -19,12 +19,12 @@ readonly KERNEL_VERSION="6.4"
 
 # Functions:
 function rootfs {
-	# Compile init program
-	cc -static init.c -o init
 
 	# Create root filesystem
 	echo "Creating root filesystem ($ROOTFS)..."
 	mkdir -p "${ROOTFS_DIR}"
+
+	# Compile init program
 	cc -static init.c -o "${ROOTFS_DIR}/init"
 
 	# Use a subshell to cleanly enter
