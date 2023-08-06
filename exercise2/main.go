@@ -74,10 +74,13 @@ func main() {
 		check(err)
 	}
 
-	// Actually
+	// Main test cases
 	err = Shred(dst)
 	if err != nil {
 		check(err)
 	}
-	// Shred("file2.txt")
+
+	// Basic test cases
+	// Shred("nonexistentfile.txt") // Calling Shred on a non existent file
+	// Shred("/etc/sudoers") // Calling Shred on a file we do not have permission to
 }
