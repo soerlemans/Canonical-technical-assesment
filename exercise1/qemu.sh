@@ -8,6 +8,9 @@ This script assumes you have qemu already installed.
 We use cc as it is part of the POSIX standard.
 We prefer 'mkdir -p' over 'mkdir --parents' as it is considered more portable.
 We use the 6.4 release of the Linux kernel as it is the most recent and least likely to compile without issues.
+
+Dependencies:
+qemu, isolinux, genisoimage
 EOF
 
 # Change current working directory to location of the script
@@ -42,13 +45,26 @@ function rootfs {
 	)
 }
 
+# Compile the Linux kernel
+function compile {
+		echo "Creating default kernel config..."
+		make defconfig
+
+		echo "Compiling kernel..."
+		make -j 2
+}
+
+# Create a bootable ISO image from the kernel and rootfs
+function create_iso {
+		echo "Creating an ISO image of the kernel and root filesystem..."
+	make isoimage ARCH=x86_64 FDINITRD=../rootfs.cpio
+}
+
 # Download and compile a version of the linux kernel
 function kernel {
 	local tarball="${1:-linux-${KERNEL_VERSION}.tar.gz}"
 	local version="${2:-$KERNEL_VERSION}"
 	local url="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/snapshot/linux-${version}.tar.gz"
-
-	https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.1.43.tar.xz
 	local kernel_dir="linux-$version"
 
 	# Download kernel
@@ -62,37 +78,35 @@ function kernel {
 	fi
 
 	# Extract kernel
-	if [[ ! -d "$kernel_dir=" ]]; then
+	if [[ ! -d "$kernel_dir" ]]; then
 		echo "Extracting kernel"
-		tarball -xzf "$tarball"
+		tar -xzf "$tarball"
 	fi
 
 	# Configure and compile kernel
 	(
-		cd "$kernel_dir="
+		cd "$kernel_dir"
 
-		make defconfig # Use default config
-		make -j 2      # Use two threads to compile
+		compile    # Compile the kernel
+		create_iso # Generate an ISO image of the kernel
 	)
 }
 
 function qemu {
-	local bzimage="${1:-${KERNEL_DIR}/arch/x86_64/boot/bzImage}"
-	local rootfs= "${2:-$ROOTFS}"
+	local bzimage_path="${1:-${KERNEL_DIR}}/arch/x86_64/boot/bzImage"
+	local rootfs_path="${2:-$ROOTFS}"
 
 	echo "Starting QEMU..."
 
 	# Now pass the kernel binary and rootfs archive to qemu
 	qemu-system-x86_64 \
-		-kernel "$bzimage" \
-		-initrd "$rootfs"
+		-kernel "$bzimage_path" \
+		-initrd "$rootfs_path"
 }
 
 # Start of script:
 # Debugging flag
-if [[ -n "$DEBUG" ]]; then
-	set -x
-fi
+[[ -n "$DEBUG" ]] && set -x
 
 mkdir -p "$TMP_DIR"
 

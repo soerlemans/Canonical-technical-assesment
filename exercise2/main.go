@@ -42,7 +42,7 @@ func Shred(t_path string) error {
 		}
 	}
 
-	// os.Remove(t_path)
+	os.Remove(t_path)
 
 	return nil
 }
