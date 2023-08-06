@@ -1,0 +1,5 @@
+This file contains the data that we will copy to another file and then shred.
+It does not matter what kind of data we have in this file as we interpret it as bytes and randomize/rewrite those.
+
+For example unicode:
+"Hello, 世界"
