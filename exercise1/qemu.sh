@@ -1,16 +1,16 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 <<EOF
 This script creates a root filesystem with an init binary.
 It then downloads and compiles a Linux kernel and then uses qemu to emulate hardware.
 
 This script assumes you have qemu already installed.
-We use cc as it is part of the POSIX standard.
+We use c99 as it is part of the POSIX standard.
 We prefer 'mkdir -p' over 'mkdir --parents' as it is considered more portable.
-We use the 6.4 release of the Linux kernel as it is the most recent and least likely to compile without issues.
+We use the 6.4 release of the Linux kernel as it is the most recent and most likely to compile without issues.
 
 Dependencies:
-qemu, isolinux, genisoimage
+build-essential, qemu, isolinux, genisoimage
 EOF
 
 # Change current working directory to location of the script
@@ -19,6 +19,8 @@ pwd -P
 
 # Readonly variables:
 readonly TMP_DIR="${TMP:-tmp}"
+
+readonly CC="${CC:-c99}"
 
 readonly ROOTFS_DIR="${TMP_DIR}/rootfs"
 readonly ROOTFS="rootfs.cpio"
@@ -34,7 +36,7 @@ function rootfs {
 	mkdir -p "$ROOTFS_DIR"
 
 	# Compile init program
-	cc -static init.c -o "${ROOTFS_DIR}/init"
+	$CC -static init.c -o "${ROOTFS_DIR}/init"
 
 	# Use a subshell to cleanly enter
 	(
@@ -51,7 +53,7 @@ function compile {
 		make defconfig
 
 		echo "Compiling kernel..."
-		make -j 2
+		make --jobs=2
 }
 
 # Create a bootable ISO image from the kernel and rootfs
@@ -69,7 +71,7 @@ function kernel {
 
 	# Download kernel
 	if [[ ! -f "$tarball" ]]; then
-		echo "Downloading Linux kernel (version $VERSION)..."
+		echo "Downloading Linux kernel (version $version)..."
 
 		wget --output-document="$tarball" \
 			--quiet \
