@@ -7,7 +7,6 @@ import (
 	"os"
 )
 
-
 func Shred(t_path string) error {
 	// Open the file
 	file, err := os.OpenFile(t_path, os.O_RDWR, 0644)
@@ -48,15 +47,7 @@ func Shred(t_path string) error {
 	return nil
 }
 
-func check(t_err error) {
-	if t_err != nil {
-		log.Fatal(t_err)
-
-		os.Exit(1)
-	}
-}
-
-func main() {
+func copy_template() (string, error) {
 	// We copy the file we want to shred from a template,
 	// this is just fluff so that we do not have to create a new file everytime we run the program
 	const (
@@ -67,21 +58,34 @@ func main() {
 	// Copy template file
 	data, err := ioutil.ReadFile(src)
 	if err != nil {
-		check(err)
+		return dst, err
 	}
 
 	err = ioutil.WriteFile(dst, data, 0644)
+	if err != nil {
+		return dst, err
+	}
+
+	return dst, nil
+}
+
+func check(t_err error) {
+	if t_err != nil {
+		log.Fatal(t_err)
+
+		os.Exit(1)
+	}
+}
+
+func main() {
+	path, err := copy_template()
 	if err != nil {
 		check(err)
 	}
 
 	// Main test cases
-	err = Shred(dst)
+	err = Shred(path)
 	if err != nil {
 		check(err)
 	}
-
-	// Basic test cases
-	// Shred("nonexistentfile.txt") // Calling Shred on a non existent file
-	// Shred("/etc/sudoers") // Calling Shred on a file we do not have permission to
 }
