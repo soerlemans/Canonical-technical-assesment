@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 <<EOF
 This script creates a root filesystem with an init binary.
@@ -60,7 +60,7 @@ function compile {
 # Create a bootable ISO image from the kernel and rootfs archive
 function create_iso {
 	echo "Creating an ISO image of the kernel and root filesystem..."
-	make isoimage ARCH=x86_64 FDINITRD=../rootfs.cpio
+	make isoimage FDINITRD=../rootfs.cpio
 }
 
 # Download, unpack and compile a version of the linux kernel
