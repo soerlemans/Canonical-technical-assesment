@@ -30,6 +30,7 @@ readonly KERNEL_VERSION="6.4"
 readonly KERNEL_DIR="linux-$KERNEL_VERSION"
 
 # Functions:
+# Create a rootfile system and store it in an archive
 function rootfs {
 	# Create root filesystem
 	echo "Creating root filesystem ($ROOTFS)..."
@@ -56,13 +57,13 @@ function compile {
 		make --jobs=2
 }
 
-# Create a bootable ISO image from the kernel and rootfs
+# Create a bootable ISO image from the kernel and rootfs archive
 function create_iso {
-		echo "Creating an ISO image of the kernel and root filesystem..."
+	echo "Creating an ISO image of the kernel and root filesystem..."
 	make isoimage ARCH=x86_64 FDINITRD=../rootfs.cpio
 }
 
-# Download and compile a version of the linux kernel
+# Download, unpack and compile a version of the linux kernel
 function kernel {
 	local tarball="${1:-linux-${KERNEL_VERSION}.tar.gz}"
 	local version="${2:-$KERNEL_VERSION}"
@@ -94,6 +95,7 @@ function kernel {
 	)
 }
 
+# Run kernel with rootfs on emulated hardware, using QEMU
 function qemu {
 	local bzimage_path="${1:-${KERNEL_DIR}}/arch/x86_64/boot/bzImage"
 	local rootfs_path="${2:-$ROOTFS}"

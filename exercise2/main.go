@@ -7,6 +7,7 @@ import (
 	"os"
 )
 
+
 func Shred(t_path string) error {
 	// Open the file
 	file, err := os.OpenFile(t_path, os.O_RDWR, 0644)
