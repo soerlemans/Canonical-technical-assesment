@@ -78,12 +78,13 @@ func check(t_err error) {
 }
 
 func main() {
+	// Prepare the file we will shred
 	path, err := copy_template()
 	if err != nil {
 		check(err)
 	}
 
-	// Main test cases
+	// Shred the file
 	err = Shred(path)
 	if err != nil {
 		check(err)
