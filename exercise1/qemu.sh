@@ -39,7 +39,7 @@ function rootfs {
 	# Compile init program
 	$CC -static init.c -o "${ROOTFS_DIR}/init"
 
-	# Use a subshell to cleanly enter
+  # Use a subshell to cleanly enter and exit the rootfs directory
 	(
 		cd "$ROOTFS_DIR"
 
@@ -86,7 +86,7 @@ function kernel {
 		tar -xzf "$tarball"
 	fi
 
-	# Configure and compile kernel
+  # Configure and compile kernel and generate bootable ISO image
 	(
 		cd "$kernel_dir"
 
